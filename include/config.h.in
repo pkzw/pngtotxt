@@ -1,0 +1,5 @@
+#define VERSION_MAJOR ${pngtotxt_VERSION_MAJOR}
+#define VERSION_MINOR ${pngtotxt_VERSION_MINOR}
+#define VERSION_PATCH ${pngtotxt_VERSION_PATCH}
+#define VERSION "${pngtotxt_VERSION_MAJOR}.${pngtotxt_VERSION_MINOR}.${pngtotxt_VERSION_PATCH}"
+#define PROJECT_NAME "${CMAKE_PROJECT_NAME}"
