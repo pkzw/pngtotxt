@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with pngtotxt.  If not, see <https://www.gnu.org/licenses/>.
  */
- 
+
 /**
  * @file   pngtotxt.h
  * @brief  PNG to text conversion
@@ -25,5 +25,6 @@
 
 #include <png.h>
 
-char * png_to_txt(png_const_bytep img, png_size_t len);
+char *
+png_to_txt (png_const_bytep img, png_size_t len);
 

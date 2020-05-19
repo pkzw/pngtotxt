@@ -16,25 +16,28 @@
  * You should have received a copy of the GNU General Public License
  * along with pngtotxt.  If not, see <https://www.gnu.org/licenses/>.
  */
- 
+
 /** 
  * @file   imgbuf.h
  * @brief  PNG to text conversion
  * @author Copyright (C) 2020 Dr. Peter Zimmerer <pkzw@web.de>
  */
- 
+
 #include <config.h>
 #include <png.h>
 
-typedef struct {
-    png_const_bytep ptr;
-    png_size_t      pos;
-    png_size_t      size;
+typedef struct
+{
+  png_const_bytep ptr;
+  png_size_t pos;
+  png_size_t size;
 } Imgbuf;
 
+Imgbuf *
+Imgbuf_new (png_const_bytep img, png_size_t size);
 
-Imgbuf * Imgbuf_new(png_const_bytep img, png_size_t size);
+void *
+Imgbuf_free (Imgbuf * bf);
 
-void *   Imgbuf_free(Imgbuf * bf);
-
-int      Imgbuf_read(Imgbuf * bf, png_bytep out, png_size_t size);
+int
+Imgbuf_read (Imgbuf * bf, png_bytep out, png_size_t size);

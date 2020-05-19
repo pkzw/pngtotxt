@@ -50,10 +50,10 @@ See program help for more information:
 ```sh
 $ pngtotxt --help
 Usage: pngtotxt [OPTIONS] [CTY] IFN
-This program converts a PNG image into a black-and-white block graphic.
+This program converts a PNG image to text using block graphic symbols.
 
 Options:
-  -a, --append      Append block graphics to output file
+  -a, --append      Append text to output file
   -h, --help        Display detailed help information
   -o, --output=OFN  Output file name (default is standard output)
   -v, --version     Display version information

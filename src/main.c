@@ -16,13 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with pngtotxt.  If not, see <https://www.gnu.org/licenses/>.
  */
- 
+
 /**
  * @file   main.c
  * @brief  PNG to text conversion
  * @author Copyright (C) 2020 Dr. Peter Zimmerer <pkzw@web.de>
  */
-
 
 #include <assert.h>
 #include <config.h>
@@ -40,10 +39,10 @@ usage (const char *arg0)
   fprintf (
       stderr,
       "Usage: %s [OPTIONS] [CTY] IFN\n"
-      "This program converts a PNG image into a black-and-white block graphic.\n"
+      "This program converts a PNG image to text using block graphic symbols.\n"
       "\n"
       "Options:\n"
-      "  -a, --append      Append block graphics to output file\n"
+      "  -a, --append      Append text to output file\n"
       "  -h, --help        Display detailed help information\n"
       "  -o, --output=OFN  Output file name (default is standard output)\n"
       "  -v, --version     Display version information\n"

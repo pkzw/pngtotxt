@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with pngtotxt.  If not, see <https://www.gnu.org/licenses/>.
  */
- 
+
 /**
  * @file   imgbuf.c
  * @brief  PNG to text conversion
@@ -30,42 +30,44 @@
 #include <string.h>
 #include <imgbuf.h>
 
-Imgbuf * Imgbuf_new(png_const_bytep img, png_size_t size)
+Imgbuf *
+Imgbuf_new (png_const_bytep img, png_size_t size)
 {
-    if (img == NULL)
-        return NULL;
-    else
+  if (img == NULL)
+    return NULL;
+  else
     {
-        Imgbuf * bf = (Imgbuf *) malloc(sizeof(Imgbuf));
-        if (bf != NULL) 
-        {
-            bf->ptr  = img;
-            bf->pos  = 0;
-            bf->size = size;
-        }
-        return bf;
+      Imgbuf * bf = (Imgbuf *) malloc (sizeof(Imgbuf));
+      if (bf != NULL)
+	{
+	  bf->ptr = img;
+	  bf->pos = 0;
+	  bf->size = size;
+	}
+      return bf;
     }
 }
 
-void *   Imgbuf_free(Imgbuf * bf)
+void *
+Imgbuf_free (Imgbuf * bf)
 {
-    if (bf != NULL)
+  if (bf != NULL)
     {
-        free(bf);
+      free (bf);
     }
 }
 
-
-int Imgbuf_read(Imgbuf * bf, png_bytep out, png_size_t size)
+int
+Imgbuf_read (Imgbuf * bf, png_bytep out, png_size_t size)
 {
-    assert(bf  != NULL);
-    assert(out != NULL);
-    if (size <= bf->size - bf->pos)
+  assert (bf != NULL);
+  assert (out != NULL);
+  if (size <= bf->size - bf->pos)
     {
-        memcpy(out, bf->ptr + bf->pos, size);
-        bf->pos += size;
-        return size;
+      memcpy (out, bf->ptr + bf->pos, size);
+      bf->pos += size;
+      return size;
     }
-    else
-    	return 0;
+  else
+    return 0;
 }
