@@ -59,7 +59,7 @@ Options:
   -v, --version     Display version information
 
 CTY is the content-type of the input file (Default is 'image/png').
-IFN is the name of the input file (required).
+IFN is the name of the input file (required). Use '-' or 'stdin' to read from standard input.
 OFN is the name of the output file.
 ```
 
