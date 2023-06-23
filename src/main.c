@@ -32,143 +32,174 @@
 #include <string.h>
 
 const char * PROGRAM_NAME = PROJECT_NAME;
+const size_t BUF_INCR = 32768;
 
 void
 usage (const char *arg0)
 {
-  fprintf (
-      stderr,
-      "Usage: %s [OPTIONS] [CTY] IFN\n"
-      "This program converts a PNG image to text using block graphic symbols.\n"
-      "\n"
-      "Options:\n"
-      "  -a, --append      Append text to output file\n"
-      "  -h, --help        Display detailed help information\n"
-      "  -o, --output=OFN  Output file name (default is standard output)\n"
-      "  -v, --version     Display version information\n"
-      "\n"
-      "CTY is the content-type of the input file (Default is 'image/png').\n"
-      "IFN is the name of the input file (required).\n"
-      "OFN is the name of the output file.\n",
-      PROGRAM_NAME);
-  exit (4);
+	fprintf (
+			stderr,
+			"Usage: %s [OPTIONS] [CTY] IFN\n"
+			"This program converts a PNG image to text using block graphic symbols.\n"
+			"\n"
+			"Options:\n"
+			"  -a, --append      Append text to output file\n"
+			"  -h, --help        Display detailed help information\n"
+			"  -o, --output=OFN  Output file name (default is standard output)\n"
+			"  -v, --version     Display version information\n"
+			"\n"
+			"CTY is the content-type of the input file (Default is 'image/png').\n"
+			"IFN is the name of the input file (required). Use '-' or 'stdin' to read from standard input.\n"
+			"OFN is the name of the output file.\n",
+			PROGRAM_NAME);
+	exit (4);
 }
 
 size_t
 get_filesize (FILE *fh)
 {
-  off_t pos = ftello (fh);
-  fseeko (fh, 0, SEEK_END);
-  off_t size = ftello (fh);
-  fseeko (fh, pos, SEEK_SET);
-  return size;
+	off_t pos = ftello (fh);
+	fseeko (fh, 0, SEEK_END);
+	off_t size = ftello (fh);
+	fseeko (fh, pos, SEEK_SET);
+	return size;
 }
 
 int
 main (int argc, char *argv[])
 {
-  int append = 0;
-  const char *content_type = "image/png";
-  const char *ifn, *ofn = "";
-  const struct option longopts[] =
-    {
-      { "append", no_argument, NULL, 'a' },
-      { "help", no_argument, NULL, 'h' },
-      { "output", required_argument, NULL, 'o' },
-      { "version", no_argument, NULL, 'v' } };
-  FILE *fin, *fout;
-  png_bytep buf;
-  size_t size;
-  int c;
-  int optidx = 0;
-
-  opterr = 0;
-  while ((c = getopt_long (argc, argv, "aho:v", longopts, &optidx)) >= 0)
-    {
-      switch (c)
+	int append = 0;
+	const char *content_type = "image/png";
+	const char *ifn, *ofn = "";
+	const struct option longopts[] =
 	{
-	case 'a':
-	  append = 1;
-	  break;
-	case 'o':
-	  ofn = optarg;
-	  break;
-	case 'v':
-	  fprintf (stderr, "pngtotxt %s\n", VERSION);
-	  exit (0);
-	case '?':
-	  fprintf (stderr, "Output file name missing\n");
-	  exit (8);
-	default:
-	  usage (argv[0]);
-	}
-    }
+			{ "append", no_argument, NULL, 'a' },
+			{ "help", no_argument, NULL, 'h' },
+			{ "output", required_argument, NULL, 'o' },
+			{ "version", no_argument, NULL, 'v' } };
+	FILE *fin, *fout;
+	png_bytep buf;
+	size_t png_size;
+	int c;
+	int optidx = 0;
 
-  if (argc - optind > 2)
-    usage (argv[0]);
-  else
-    {
-      if (argc - optind == 2)
-	if (strcmp (argv[optind], content_type) == 0)
-	  optind++;
+	opterr = 0;
+	while ((c = getopt_long (argc, argv, "aho:v", longopts, &optidx)) >= 0)
+	{
+		switch (c)
+		{
+		case 'a':
+			append = 1;
+			break;
+		case 'o':
+			ofn = optarg;
+			break;
+		case 'v':
+			fprintf (stderr, "pngtotxt %s\n", VERSION);
+			exit (0);
+		case '?':
+			fprintf (stderr, "Output file name missing\n");
+			exit (8);
+		default:
+			usage (argv[0]);
+		}
+	}
+
+	if (argc - optind > 2)
+		usage (argv[0]);
 	else
-	  {
-	    fprintf (stderr, "Content type '%s' is not supported\n",
-		     argv[optind]);
-	    exit (8);
-	  }
-      if (optind < argc)
-	ifn = argv[optind];
-      else
 	{
-	  fprintf (stderr, "Input file name missing.\n"
-		   "Try 'pngtotxt --help' for more information.\n");
-	  exit (8);
+		if (argc - optind == 2)
+			if (strcmp (argv[optind], content_type) == 0)
+				optind++;
+			else
+			{
+				fprintf (stderr, "Content type '%s' is not supported\n",
+						argv[optind]);
+				exit (8);
+			}
+		if (optind < argc)
+			ifn = argv[optind];
+		else
+		{
+			fprintf (stderr, "Input file name missing.\n"
+					"Try 'pngtotxt --help' for more information.\n");
+			exit (8);
+		}
 	}
-    }
 
-  fin = fopen (ifn, "rb");
-  if (fin == NULL)
-    {
-      fprintf (stderr, "Could not open input file '%s'\n", ifn);
-      exit (8);
-    }
 
-  size = get_filesize (fin);
-  if (size == 0)
-    {
-      fprintf (stderr, "Input file '%s' must not be empty\n", argv[2]);
-      fclose (fin);
-      exit (8);
-    }
-
-  if (strcmp (ofn, "") == 0)
-    fout = stdout;
-  else
-    {
-      fout = fopen (ofn, append ? "a" : "w");
-      if (fout == NULL)
+	if (! strcmp(ifn, "-") || ! strcmp(ifn, "stdin"))
 	{
-	  fclose (fin);
-	  fprintf (stderr, "Could not open output file '%s'\n", ofn);
-	  exit (8);
+		size_t buf_size = BUF_INCR;
+		buf = malloc (buf_size);
+		if (buf)
+		{
+			png_size = 0;
+			while (fread (buf + png_size, 1, 1, stdin))
+			{
+				png_size++;
+				if (png_size == buf_size)
+				{
+					buf_size += BUF_INCR;
+					png_bytep new_buf = realloc(buf, buf_size);
+					if (new_buf)
+						buf = new_buf;
+					else
+					{
+						fprintf (stderr, "Could not enlarge buffer to size %d\n", buf_size);
+						exit (8);
+					}
+				}
+				assert(png_size < buf_size);
+			}
+		}
 	}
-    }
+	else
+	{
+		fin = fopen (ifn, "rb");
+		if (fin == NULL)
+		{
+			fprintf (stderr, "Could not open input file '%s'\n", ifn);
+			exit (8);
+		}
 
-  buf = (png_bytep) malloc (size);
-  fread (buf, size, 1, fin);
-  fclose (fin);
+		png_size = get_filesize (fin);
+		if (png_size == 0)
+		{
+			fprintf (stderr, "Input file '%s' must not be empty\n", argv[2]);
+			fclose (fin);
+			exit (8);
+		}
+		buf = (png_bytep) malloc (png_size);
+		fread (buf, png_size, 1, fin);
+		fclose (fin);
+	}
 
-  const char * txt = png_to_txt (buf, size);
-  if (txt != NULL)
-    {
-      fprintf (fout, "%s", txt);
-      free ((void *) txt);
-      txt = NULL;
-    }
+	const char * txt = png_to_txt (buf, png_size);
+	if (txt != NULL)
+	{
 
-  if (fout != stdout)
-    fclose (fout);
+		if (strcmp (ofn, "") == 0)
+			fout = stdout;
+		else
+		{
+			fout = fopen (ofn, append ? "a" : "w");
+			if (fout == NULL)
+			{
+				fclose (fin);
+				fprintf (stderr, "Could not open output file '%s'\n", ofn);
+				exit (8);
+			}
+		}
+		fprintf (fout, "%s", txt);
+		if (fout != stdout)
+			fclose (fout);
 
-  return 0;
+		free ((void *) txt);
+		txt = NULL;
+	}
+	free (buf);
+
+	return 0;
 }
