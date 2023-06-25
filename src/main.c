@@ -31,60 +31,45 @@
 #include <stdio.h>
 #include <string.h>
 
-const char * PROGRAM_NAME = PROJECT_NAME;
+const char *PROGRAM_NAME = PROJECT_NAME;
 const size_t BUF_INCR = 32768;
 
-void
-usage (const char *arg0)
+void usage(const char *arg0)
 {
-	fprintf (
-			stderr,
+	fprintf(
+	stderr,
 			"Usage: %s [OPTIONS] [CTY] IFN\n"
-			"This program converts a PNG image to text using block graphic symbols.\n"
-			"\n"
-			"Options:\n"
-			"  -a, --append      Append text to output file\n"
-			"  -h, --help        Display detailed help information\n"
-			"  -o, --output=OFN  Output file name (default is standard output)\n"
-			"  -v, --version     Display version information\n"
-			"\n"
-			"CTY is the content-type of the input file (Default is 'image/png').\n"
-			"IFN is the name of the input file (required). Use '-' or 'stdin' to read from standard input.\n"
-			"OFN is the name of the output file.\n",
-			PROGRAM_NAME);
-	exit (4);
+					"This program converts a PNG image to text using block graphic symbols.\n"
+					"\n"
+					"Options:\n"
+					"  -a, --append      Append text to output file\n"
+					"  -h, --help        Display detailed help information\n"
+					"  -o, --output=OFN  Output file name (default is standard output)\n"
+					"  -v, --version     Display version information\n"
+					"\n"
+					"CTY is the content-type of the input file (Default is 'image/png').\n"
+					"IFN is the name of the input file (required). Use '-' or 'stdin' to read from standard input.\n"
+					"OFN is the name of the output file.\n", PROGRAM_NAME);
+	exit(4);
 }
 
-size_t
-get_filesize (FILE *fh)
-{
-	off_t pos = ftello (fh);
-	fseeko (fh, 0, SEEK_END);
-	off_t size = ftello (fh);
-	fseeko (fh, pos, SEEK_SET);
-	return size;
-}
-
-int
-main (int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	int append = 0;
 	const char *content_type = "image/png";
 	const char *ifn, *ofn = "";
 	const struct option longopts[] =
 	{
-			{ "append", no_argument, NULL, 'a' },
-			{ "help", no_argument, NULL, 'h' },
-			{ "output", required_argument, NULL, 'o' },
-			{ "version", no_argument, NULL, 'v' } };
+	{ "append", no_argument, NULL, 'a' },
+	{ "help", no_argument, NULL, 'h' },
+	{ "output", required_argument, NULL, 'o' },
+	{ "version", no_argument, NULL, 'v' } };
 	FILE *fin, *fout;
-	png_bytep buf;
-	size_t png_size;
 	int c;
 	int optidx = 0;
 
 	opterr = 0;
-	while ((c = getopt_long (argc, argv, "aho:v", longopts, &optidx)) >= 0)
+	while ((c = getopt_long(argc, argv, "aho:v", longopts, &optidx)) >= 0)
 	{
 		switch (c)
 		{
@@ -95,111 +80,128 @@ main (int argc, char *argv[])
 			ofn = optarg;
 			break;
 		case 'v':
-			fprintf (stderr, "pngtotxt %s\n", VERSION);
-			exit (0);
+			fprintf(stderr, "pngtotxt %s\n", VERSION);
+			exit(0);
 		case '?':
-			fprintf (stderr, "Output file name missing\n");
-			exit (8);
+			fprintf(stderr, "Output file name missing\n");
+			exit(8);
 		default:
-			usage (argv[0]);
+			usage(argv[0]);
 		}
 	}
 
 	if (argc - optind > 2)
-		usage (argv[0]);
+		usage(argv[0]);
 	else
 	{
 		if (argc - optind == 2)
-			if (strcmp (argv[optind], content_type) == 0)
+			if (strcmp(argv[optind], content_type) == 0)
 				optind++;
 			else
 			{
-				fprintf (stderr, "Content type '%s' is not supported\n",
+				fprintf(stderr, "Content type '%s' is not supported\n",
 						argv[optind]);
-				exit (8);
+				exit(8);
 			}
 		if (optind < argc)
 			ifn = argv[optind];
 		else
 		{
-			fprintf (stderr, "Input file name missing.\n"
+			fprintf(stderr, "Input file name missing.\n"
 					"Try 'pngtotxt --help' for more information.\n");
-			exit (8);
+			exit(8);
 		}
 	}
 
-
-	if (! strcmp(ifn, "-") || ! strcmp(ifn, "stdin"))
-	{
-		size_t buf_size = BUF_INCR;
-		buf = malloc (buf_size);
-		if (buf)
-		{
-			png_size = 0;
-			while (fread (buf + png_size, 1, 1, stdin))
-			{
-				png_size++;
-				if (png_size == buf_size)
-				{
-					buf_size += BUF_INCR;
-					png_bytep new_buf = realloc(buf, buf_size);
-					if (new_buf)
-						buf = new_buf;
-					else
-					{
-						fprintf (stderr, "Could not enlarge buffer to size %d\n", buf_size);
-						exit (8);
-					}
-				}
-				assert(png_size < buf_size);
-			}
-		}
-	}
+	// Open input file
+	if (!strcmp(ifn, "-") || !strcmp(ifn, "stdin"))
+		fin = stdin;
 	else
 	{
-		fin = fopen (ifn, "rb");
+		fin = fopen(ifn, "rb");
 		if (fin == NULL)
 		{
-			fprintf (stderr, "Could not open input file '%s'\n", ifn);
-			exit (8);
+			fprintf(stderr, "Could not open input file '%s'\n", ifn);
+			exit(8);
 		}
-
-		png_size = get_filesize (fin);
-		if (png_size == 0)
-		{
-			fprintf (stderr, "Input file '%s' must not be empty\n", argv[2]);
-			fclose (fin);
-			exit (8);
-		}
-		buf = (png_bytep) malloc (png_size);
-		fread (buf, png_size, 1, fin);
-		fclose (fin);
 	}
 
-	const char * txt = png_to_txt (buf, png_size);
+	// Read PNG image from input file
+	size_t buf_size = BUF_INCR, png_size = 0, sz;
+	png_bytep buf = malloc(buf_size * sizeof(*buf));
+	while ((sz = fread(buf + png_size, sizeof(*buf), buf_size, fin)) > 0)
+	{
+		png_size += sz;
+		if (png_size < buf_size)
+			break;
+		buf_size += BUF_INCR;
+		assert(png_size < buf_size);
+		png_bytep new_buf = realloc(buf, buf_size * sizeof(*buf));
+		if (new_buf == NULL)
+		{
+			fprintf(stderr, "Could not enlarge buffer to size %d bytes\n",
+					buf_size * sizeof(*buf));
+			free(buf);
+			buf = NULL;
+			break;
+		}
+		buf = new_buf;
+	}
+
+	// Close input file
+	if (fin != stdin)
+	{
+		fclose(fin);
+		fin = NULL;
+	}
+
+	if (buf == NULL)
+	{
+		fprintf(stderr, "Reading from input file '%s' has failed\n", ifn);
+		exit(8);
+	}
+
+	if (png_size == 0)
+	{
+		fprintf(stderr, "Input file '%s' must not be empty\n", ifn);
+		free(buf);
+		buf = NULL;
+		exit(8);
+	}
+	assert(png_size < buf_size);
+	buf_size = png_size;
+	buf = realloc(buf, buf_size * sizeof(*buf));
+
+	const char *txt = png_to_txt(buf, png_size);
+
+	if (buf != NULL)
+	{
+		free(buf);
+		buf = NULL;
+	}
+
 	if (txt != NULL)
 	{
 
-		if (strcmp (ofn, "") == 0)
+		if (strcmp(ofn, "") == 0)
 			fout = stdout;
 		else
 		{
-			fout = fopen (ofn, append ? "a" : "w");
+			fout = fopen(ofn, append ? "a" : "w");
 			if (fout == NULL)
 			{
-				fclose (fin);
-				fprintf (stderr, "Could not open output file '%s'\n", ofn);
-				exit (8);
+				fclose(fin);
+				fprintf(stderr, "Could not open output file '%s'\n", ofn);
+				exit(8);
 			}
 		}
-		fprintf (fout, "%s", txt);
+		fprintf(fout, "%s", txt);
 		if (fout != stdout)
-			fclose (fout);
+			fclose(fout);
 
-		free ((void *) txt);
+		free((void*) txt);
 		txt = NULL;
 	}
-	free (buf);
 
 	return 0;
 }
